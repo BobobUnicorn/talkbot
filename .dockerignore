@@ -1,0 +1,3 @@
+*/config/*.server
+*/config/auth.json
+*google-auth.json

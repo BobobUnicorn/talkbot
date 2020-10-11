@@ -1,13 +1,13 @@
 version: "2"
 services:
   node:
-    image: "abcdef:1.14"
-    working_dir: /usr/src/app
-    environment:
-      - NODE_ENV=production
+    image: "faxwang/talkbot:1.0"
+    command: /usr/src/app/command.sh
     volumes:
       - ./:/usr/src/app
+      - ./google-auth.json /root/.google/google-auth.json
+    environment:
+      - GOOGLE_APPLICATION_CREDENTIALS=/root/.google/google-auth.json
     expose:
       - "80"
       - "443"
-    command: "pm2-runtime start ecosystem.config.js --only docker"
