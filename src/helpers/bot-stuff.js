@@ -18,7 +18,7 @@ class BotStuff {
   }
 
   connect() {
-    this.bot.login(auth.token);
+    this.bot.login(process.env.TOKEN);
   }
 
   isServerOwner(server, member) {
