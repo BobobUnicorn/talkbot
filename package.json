@@ -47,5 +47,8 @@
     "@models": "src/models",
     "@services": "src/services",
     "@tts": "src/services/tts"
+  },
+  "engines": {
+    "node": "18.x"
   }
 }
