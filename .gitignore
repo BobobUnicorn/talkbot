@@ -5,3 +5,4 @@ talkbot.code-workspace
 samples
 /config/google-auth.json
 dist
+.env

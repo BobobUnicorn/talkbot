@@ -1,0 +1,66 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model MemberSettings {
+  memberId      String
+  guildId       String
+  guildSettings GuildSettings @relation(fields: [guildId], references: [guildId])
+
+  // The gender to use; the bot will use a random voice for that gender.
+  gender          String?
+  // The language to use; the bot will use a random voice for that language.
+  language        String?
+  // The alias or voice code to use.
+  voice           String?
+  // The amount to adjust pitch by, -20 to +20.
+  pitchAdjustment Int?
+  // The speech speed to use, 0.25 to 4.0.
+  speed           Int?
+  // How the member would like to be referred to as.
+  title           String?
+  // A prefix that the bot will play before any messages the member sends. Can accept SSML.
+  prefix          String?
+
+  @@id([memberId, guildId])
+}
+
+model AudioEmoji {
+  id            Int           @id @default(autoincrement())
+  guildId       String
+  guildSettings GuildSettings @relation(fields: [guildId], references: [guildId])
+
+  emoji           String
+  textReplacement String
+}
+
+model GuildSettings {
+  // The Discord Snowflake for this guild.
+  guildId         String           @unique
+  // The overridden prefix for this guild.
+  prefix          String?
+  // The roles that we should consider to be administrators of the bot.
+  adminRoles      String[]
+  // An additional mapping of emoji to their textual equivalents.
+  audioEmoji      AudioEmoji[]
+  // Settings for individual members in this guild.
+  memberSettings  MemberSettings[]
+  // The overridden default language for this guild.
+  defaultLanguage String?
+  // The timestamp when we've been added to this particular guild.
+  joinDate        DateTime         @default(now())
+  // Discord Snowflakes for members for whom we will currently follow all messages
+  following       String[]
+  // Discord Snowflakes for members/roles for whom we will allow usage of the bot
+  permitted       String[]
+
+  @@id([guildId])
+}
