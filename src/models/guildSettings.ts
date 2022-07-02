@@ -37,16 +37,16 @@ export class GuildSettings {
         return this.raw.defaultLanguage;
     }
 
-    get joinDate() {
-        return this.raw.joinDate;
-    }
-
     get following() {
         return this.raw.following;
     }
 
     get permitted() {
-        return this.raw.permitted;
+        return [...this.raw.permittedMembers, ...this.raw.permittedRoles];
+    }
+
+    get ttsPermittedChannels() {
+        return this.raw.ttsPermittedChannels;
     }
 
     constructor(private readonly raw: RawGuildSettings) {}

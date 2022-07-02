@@ -4,6 +4,7 @@
   "description": "Text to speech bot",
   "main": "dist/index.js",
   "author": "YOUR-NAME-HERE",
+  "type": "module",
   "scripts": {
     "build": "tsc",
     "watch": "tsc -w",
@@ -19,6 +20,7 @@
     "@prisma/client": "^4.0.0",
     "@suldashi/lame": "^1.2.5",
     "discord.js": "^13.8.1",
+    "dotenv-safe": "^8.2.0",
     "figlet": "^1.5.2",
     "ibm-watson": "^7.0.0",
     "lang.js": "^1.1.14",
@@ -33,9 +35,11 @@
     "tencentcloud-sdk-nodejs": "^4.0.374",
     "tmi.js": "^1.8.5",
     "twitch-toolkit": "0.0.11",
-    "xmlbuilder": "^15.1.1"
+    "xmlbuilder": "^15.1.1",
+    "zod": "^3.17.3"
   },
   "devDependencies": {
+    "@types/dotenv-safe": "^8.1.2",
     "@types/figlet": "^1.5.4",
     "@types/node": "^18.0.0",
     "jshint": "^2.13.4",

@@ -15,6 +15,17 @@ export async function getGuildSettings(guildId: Snowflake) {
     });
 }
 
+export async function getGuildStatistics(guildId: Snowflake, date: Date) {
+    return await prisma.guildStatistics.findUnique({
+        where: {
+            guildId_date: {
+                guildId,
+                date,
+            },
+        },
+    });
+}
+
 export async function getMemberSettings(guildId: Snowflake, memberId: Snowflake) {
     return await prisma.memberSettings.findUnique({
         where: {
@@ -30,8 +41,8 @@ export async function disconnect() {
     await prisma.$disconnect();
 }
 
-type RawGuildSettings = NonNullable<Awaited<ReturnType<typeof getGuildSettings>>>;
-type RawMemberSettings = NonNullable<Awaited<ReturnType<typeof getMemberSettings>>>;
+export type RawGuildSettings = NonNullable<Awaited<ReturnType<typeof getGuildSettings>>>;
+export type RawGuildStatistics = NonNullable<Awaited<ReturnType<typeof getGuildStatistics>>>;
+export type RawMemberSettings = NonNullable<Awaited<ReturnType<typeof getMemberSettings>>>;
 
-export { RawMemberSettings, RawGuildSettings };
 export { AudioEmoji as RawAudioEmoji } from '@prisma/client';

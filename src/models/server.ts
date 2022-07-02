@@ -14,46 +14,37 @@ import * as fs from 'fs/promises';
 import * as paths from '../paths.js';
 import { TextToSpeechService, TTSOptions, VoiceProviders } from '../services/textToSpeechService.js';
 import { commands } from '../commands/index.js';
+import { GuildSettings } from './guildSettings.js';
+import { getConfig } from 'src/managers/config.js';
 
-const TIMEOUT_NEGLECT = botStuff.config.neglect_timeout || 480 * 60 * 1000; // 2 hours
+const config = await getConfig();
 
-const NEGLECT_TIMEOUT_MESSAGES = botStuff.config.neglect_timeout_messages || ['talkbot inactivity timeout'];
+const TIMEOUT_NEGLECT = config.neglectTimeout;
+
+const NEGLECT_TIMEOUT_MESSAGES = config.neglectTimeoutMessages;
+
+const FALLBACK_LANGUAGE = 'en';
 
 export class Server {
-    readonly audioEmojis: Record<string, string>;
-    readonly memberSettings: Record<string, Record<string, string>>;
-    readonly textrules: Record<string, string>;
+    private readonly settings: GuildSettings;
+
     boundTo: GuildMember | null = null;
     // when bound this will include the master, !permit to add others
     readonly permitted: Set<Snowflake> = new Set();
     // created to timeout the !follow if the bot is not used
     private neglectTimeout: ReturnType<typeof setTimeout> | null = null;
-    // language of the server
-    readonly language: string;
-    // default provider for voices
-    readonly defaultProvider: string;
-    // what role can admin this server
-    readonly adminrole: string;
-    // restrict talkbot to a specific server
-    readonly restrictions: Snowflake[];
     // bind talkbot to a autofollow joining people
     readonly bind: Snowflake[];
     // allow people to be auto permitted
     bindPermit: boolean;
     // queue for !keep
-    readonly keepMessages: Snowflake[];
+    readonly keepMessages: Snowflake[] = [];
     // statistics on this server
     readonly stats: Record<string, unknown>;
-    // when was the server originally created
-    readonly created: Date;
-    // command char override for this server
-    readonly command_char: string;
     // when was this server last created in memory
     updated = new Date();
     // max number of chars this server can speak - to avoid spamming the APIs
     readonly charLimit: number;
-    // idk?
-    readonly fallbackLang = 'en';
     // access the lang file
     readonly commandResponses = new Lang({
         messages: Object.assign(require('@src/lang.json'), require('@config/lang.json')),
@@ -68,49 +59,7 @@ export class Server {
     private connecting: boolean = false;
 
     // create the server object
-    constructor(private readonly guild: Guild, private readonly world: World) {
-        // get the state file from the disk
-        const stateData = this.loadState() || {};
-
-        // a list of the audioEmojis for !sfx command
-        this.audioEmojis = stateData.audioEmojis || {};
-
-        // general member settings, used in quite a few commands
-        this.memberSettings = stateData.memberSettings || {};
-
-        // list of text rules for !textrule, default settings as well
-        this.textrules = stateData.textrules || require('@config/default.textrules.json');
-
-        // default provider for voices
-        this.defaultProvider = stateData.defaultProvider || '';
-
-        // what role can admin this server
-        this.adminrole = stateData.adminrole || '';
-
-        // restrict talkbot to a specific server
-        this.restrictions = stateData.restrictions || [];
-
-        // bind talkbot to a autofollow joining people
-        this.bind = stateData.bind || [];
-
-        // allow people to be auto permitted
-        this.bindPermit = stateData.bindPermit || false;
-
-        // queue for !keep
-        this.keepMessages = stateData.keepMessages || {};
-
-        // statistics on this server
-        this.stats = stateData.stats || {};
-
-        // when was the server originally created
-        this.created = stateData.created || new Date();
-
-        // command char override for this server
-        this.command_char = stateData.command_char;
-
-        // max number of chars this server can speak - to avoid spamming the APIs
-        this.charLimit = stateData.charLimit || 100000;
-    }
+    constructor(private readonly guild: Guild, private readonly world: World) {}
 
     setMaster(member: GuildMember) {
         this.boundTo = member;
@@ -373,9 +322,9 @@ export class Server {
 
         this.resetNeglectTimeout();
 
-        const service =
-            TextToSpeechService.getService(options?.voiceProvider ?? this.defaultProvider) ||
-            TextToSpeechService.defaultProvider;
+        const service = options?.voiceProvider
+            ? TextToSpeechService.getService(options?.voiceProvider)
+            : TextToSpeechService.defaultProvider;
 
         // Performs the Text-to-Speech request
         try {

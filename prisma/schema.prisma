@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -42,23 +39,57 @@ model AudioEmoji {
   textReplacement String
 }
 
+model GuildStatistics {
+  // The Discord Snowflake for this guild.
+  guildId        String
+  // The number of characters spoken by the bot.
+  characterCount Int
+  // The number of words spoken by the bot.
+  wordCount      Int
+  // The users who have had messages spoken by the bot.
+  uniqueUsers    Int[]
+  // The date for which these statistics apply.
+  date           DateTime
+
+  // The guild to which these settings belong.
+  guild Guild @relation(fields: [guildId], references: [guildId])
+
+  @@id([guildId, date])
+}
+
 model GuildSettings {
   // The Discord Snowflake for this guild.
-  guildId         String           @id
+  guildId              String           @id
   // The overridden prefix for this guild.
-  prefix          String?
+  prefix               String?
   // The roles that we should consider to be administrators of the bot.
-  adminRoles      String[]
+  adminRoles           String[]
   // An additional mapping of emoji to their textual equivalents.
-  audioEmoji      AudioEmoji[]
+  audioEmoji           AudioEmoji[]
   // Settings for individual members in this guild.
-  memberSettings  MemberSettings[]
+  memberSettings       MemberSettings[]
   // The overridden default language for this guild.
-  defaultLanguage String?
+  defaultLanguage      String?
+  // Discord Snowflakes for members for whom we will currently follow all messages.
+  following            String[]
+  // Discord Snowflakes for members for whom we will allow usage of the bot.
+  permittedMembers     String[]
+  // Discord Snowflakes for roles for whom we will allow usage of the bot.
+  permittedRoles       String[]
+  // Discord Snowflakes for channels in which the bot will look for TTS messages.
+  ttsPermittedChannels String[]
+
+  // The guild to which these settings belong.
+  guild Guild @relation(fields: [guildId], references: [guildId])
+}
+
+model Guild {
+  // The Discord Snowflake for this guild.
+  guildId    String            @id
   // The timestamp when we've been added to this particular guild.
-  joinDate        DateTime         @default(now())
-  // Discord Snowflakes for members for whom we will currently follow all messages
-  following       String[]
-  // Discord Snowflakes for members/roles for whom we will allow usage of the bot
-  permitted       String[]
+  joinDate   DateTime          @default(now())
+  // Customizable settings for this guild.
+  settings   GuildSettings?
+  // The usage statistics for this guild.
+  statistics GuildStatistics[]
 }
