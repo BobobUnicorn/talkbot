@@ -2,15 +2,18 @@
   "name": "talkbot",
   "version": "0.0.1",
   "description": "Text to speech bot",
-  "main": "bot.js",
+  "main": "dist/index.js",
   "author": "YOUR-NAME-HERE",
   "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
     "start": "node .",
     "samples": "node bin/create-samples.js"
   },
   "dependencies": {
     "@alexanderolsen/libsamplerate-js": "^1.4.3",
     "@discordjs/opus": "0.7.0",
+    "@discordjs/voice": "^0.10.0",
     "@google-cloud/text-to-speech": "^4.0.0",
     "@google-cloud/translate": "^7.0.0",
     "@suldashi/lame": "^1.2.5",
@@ -32,10 +35,13 @@
     "xmlbuilder": "^15.1.1"
   },
   "devDependencies": {
+    "@types/figlet": "^1.5.4",
+    "@types/node": "^18.0.0",
     "jshint": "^2.13.4",
     "nodemon": "^1.3.3",
     "sprintf-js": "^1.1.2",
-    "sync-request": "^6.1.0"
+    "sync-request": "^6.1.0",
+    "typescript": "^4.7.4"
   },
   "_moduleAliases": {
     "@config": "config",

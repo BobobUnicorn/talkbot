@@ -1,0 +1,42 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
+    "baseUrl": "./",
+    "downlevelIteration": true,
+    "importHelpers": false,
+    "module": "es2015",
+    "sourceMap": true,
+    "declaration": false,
+    "moduleResolution": "node",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "noEmitHelpers": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "outDir": "dist",
+    "strict": true,
+    "strictPropertyInitialization": false,
+    "pretty": true,
+    "target": "es2019",
+    "traceResolution": false,
+    "typeRoots": [
+      "node_modules/@types"
+    ],
+    "types": [
+      "node"
+    ],
+    "lib": [
+      "esnext"
+    ]
+  },
+  "include": [
+    "src/**/*.ts",
+    "config/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules/**",
+    "**/node_modules/**",
+    "**/*.spec.ts"
+  ]
+}

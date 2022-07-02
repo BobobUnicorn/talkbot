@@ -229,8 +229,9 @@ function Commands() {
     };
 }
 
-commands = new Commands();
+const commands = new Commands();
 commands.registerAllCommands();
 commands.runAllStartupTests();
 
-module.exports = commands; //commands;
+export {commands};
+

@@ -1,8 +1,7 @@
 /node_modules/
-auth.json
 state.json
 /config/*.server
-/config/ohshit*
 talkbot.code-workspace
 samples
 /config/google-auth.json
+dist
