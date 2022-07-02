@@ -44,7 +44,7 @@ model AudioEmoji {
 
 model GuildSettings {
   // The Discord Snowflake for this guild.
-  guildId         String           @unique
+  guildId         String           @id
   // The overridden prefix for this guild.
   prefix          String?
   // The roles that we should consider to be administrators of the bot.
@@ -61,6 +61,4 @@ model GuildSettings {
   following       String[]
   // Discord Snowflakes for members/roles for whom we will allow usage of the bot
   permitted       String[]
-
-  @@id([guildId])
 }
