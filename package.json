@@ -16,6 +16,7 @@
     "@discordjs/voice": "^0.10.0",
     "@google-cloud/text-to-speech": "^4.0.0",
     "@google-cloud/translate": "^7.0.0",
+    "@prisma/client": "^4.0.0",
     "@suldashi/lame": "^1.2.5",
     "discord.js": "^13.8.1",
     "figlet": "^1.5.2",
