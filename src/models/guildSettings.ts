@@ -3,6 +3,7 @@ import { getGuildSettings, RawGuildSettings } from '../managers/database.js';
 import { AudioEmoji } from './audioEmoji.js';
 import { MemberSettings } from './memberSettings.js';
 
+/** User-controlled settings for a particular guild. */
 export class GuildSettings {
     static async resolve(guildId: Snowflake): Promise<GuildSettings | null> {
         const rawSettings = await getGuildSettings(guildId);

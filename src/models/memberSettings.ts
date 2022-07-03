@@ -1,6 +1,7 @@
 import { Snowflake } from 'discord.js';
 import { getMemberSettings, RawMemberSettings } from '../managers/database.js';
 
+/** User-controlled member-specific settings for a particular guild. */
 export class MemberSettings {
     static async resolve(guildId: Snowflake, memberId: Snowflake): Promise<MemberSettings | null> {
         const rawSettings = await getMemberSettings(guildId, memberId);
@@ -36,6 +37,10 @@ export class MemberSettings {
 
     get prefix() {
         return this.raw.prefix;
+    }
+
+    get translateLanguage() {
+      return this.raw.translateLanguage;
     }
 
     constructor(private readonly raw: RawMemberSettings) {}

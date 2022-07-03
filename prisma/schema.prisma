@@ -13,19 +13,21 @@ model MemberSettings {
   guildSettings GuildSettings @relation(fields: [guildId], references: [guildId])
 
   // The gender to use; the bot will use a random voice for that gender.
-  gender          String?
+  gender              String?
   // The language to use; the bot will use a random voice for that language.
-  language        String?
+  language            String?
   // The alias or voice code to use.
-  voice           String?
+  voice               String?
   // The amount to adjust pitch by, -20 to +20.
-  pitchAdjustment Int?
+  pitchAdjustment     Int?
   // The speech speed to use, 0.25 to 4.0.
-  speed           Int?
+  speed               Int?
   // How the member would like to be referred to as.
-  title           String?
+  title               String?
   // A prefix that the bot will play before any messages the member sends. Can accept SSML.
-  prefix          String?
+  prefix              String?
+  // The language to translate text to.
+  translationLanguage String?
 
   @@id([memberId, guildId])
 }

@@ -1,6 +1,7 @@
 import * as common from '../helpers/common.js';
 import * as fs from 'fs/promises';
 import * as paths from '../paths.js';
+import { logger } from '../helpers/logger.js';
 
 export interface TTSOptions {
     name: string;
@@ -10,11 +11,26 @@ export interface TTSOptions {
 
 export type VoiceProviders = 'google' | 'amazon' | 'polly';
 
+interface VoiceSpeechServiceOptions {
+    voice: string;
+    provider?: VoiceProviders;
+}
+
+interface LanguageGenderSpeechServiceOptions {
+    language: string;
+    gender: string;
+    provider?: VoiceProviders;
+}
+
+export type SpeechServiceOptions = VoiceSpeechServiceOptions | LanguageGenderSpeechServiceOptions;
+
+const ALL_SERVICES: readonly TextToSpeechService[] = [];
+
 // base class for building specific TTS APIs over
 export abstract class TextToSpeechService {
     // name of the service - eg. google, amazon, azure, watson
     get shortname() {
-        common.error('Please implement the shortname property');
+        logger.error('Please implement the shortname property');
         return 'unset';
     }
 
@@ -35,9 +51,9 @@ export abstract class TextToSpeechService {
     /**
      * [startupTests to check things this API needs to operate]
      *
-     * Should exit the process if this is not configured correctly
+     * Should throw an error if this is not configured correctly.
      */
-    abstract startupTests(): void ;
+    abstract startupTests(): void;
 
     /**
      * [getAudioContent from the underlying API]
@@ -47,17 +63,17 @@ export abstract class TextToSpeechService {
     /**
      * [getVoices get the voice configurations available from this service]
      */
-    abstract getVoices(): string[];
+    abstract getVoices(): Set<string>;
 
     /**
      * [getDefaultVoice gets the default voice name for this service]
      */
-    abstract getDefaultVoice(gender: string, langCode: string): string ;
+    abstract getDefaultVoice(gender: string, langCode: string): string;
 
     /**
      * [getDefaultVoice gets the default voice name for this service]
      */
-    abstract getRandomVoice(seed: string, gender: string, langCode: string): string;
+    abstract getRandomVoice(gender: string, langCode: string): string;
 
     /**
      * [checkVoiceStructure confirm the voices array is formed correctly]
@@ -144,7 +160,7 @@ export abstract class TextToSpeechService {
     /**
      * [getService find the API based on the member's settings]
      */
-    static getService(provider: VoiceProviders): TextToSpeechService|null {
+    static getService(provider: VoiceProviders): TextToSpeechService | null {
         return TextToSpeechService.providers[provider];
         return service;
     }
@@ -210,5 +226,38 @@ export abstract class TextToSpeechService {
             }
         }
         return null;
+    }
+
+    static #resolveProvider(options: SpeechServiceOptions) {
+        for (const service of ALL_SERVICES) {
+            if ('voice' in options && service.getVoices().has(options.voice)) {
+                return { service, voice: options.voice };
+            } else if ('language' in options && 'gender' in options) {
+                const voice = service.getRandomVoice(options.language, options.gender);
+                if (voice) {
+                    return { service, voice };
+                }
+            }
+        }
+        return { service: null, voice: null };
+    }
+
+    static getSpeechService(options: SpeechServiceOptions) {
+        let service: TextToSpeechService | null;
+        let voice: string | null;
+        if (!options.provider) {
+            ({ service, voice } = TextToSpeechService.#resolveProvider(options));
+        } else {
+            service = TextToSpeechService.getService(options.provider);
+            if ('voice' in options) {
+                voice = options.voice;
+            } else {
+                voice = service?.getRandomVoice(options.language, options.gender) ?? null;
+            }
+        }
+        return {
+            service,
+            voice,
+        };
     }
 }

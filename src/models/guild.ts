@@ -16,6 +16,7 @@ import { TextToSpeechService, TTSOptions, VoiceProviders } from '../services/tex
 import { commands } from '../commands/index.js';
 import { GuildSettings } from './guildSettings.js';
 import { getConfig } from 'src/managers/config.js';
+import { GuildStatistics } from './guildStatistics.js';
 
 const config = await getConfig();
 
@@ -23,10 +24,9 @@ const TIMEOUT_NEGLECT = config.neglectTimeout;
 
 const NEGLECT_TIMEOUT_MESSAGES = config.neglectTimeoutMessages;
 
-const FALLBACK_LANGUAGE = 'en';
-
-export class Server {
+export class GuildModel {
     private readonly settings: GuildSettings;
+    private readonly stats: GuildStatistics;
 
     boundTo: GuildMember | null = null;
     // when bound this will include the master, !permit to add others
@@ -39,8 +39,6 @@ export class Server {
     bindPermit: boolean;
     // queue for !keep
     readonly keepMessages: Snowflake[] = [];
-    // statistics on this server
-    readonly stats: Record<string, unknown>;
     // when was this server last created in memory
     updated = new Date();
     // max number of chars this server can speak - to avoid spamming the APIs
@@ -58,41 +56,22 @@ export class Server {
     // whether or not we're currently connecting
     private connecting: boolean = false;
 
+    get id() {
+        return this.discordGuild.id;
+    }
+
     // create the server object
-    constructor(private readonly guild: Guild, private readonly world: World) {}
+    constructor(readonly discordGuild: Guild, private readonly world: World) {}
+
+    getMemberSettings(member: GuildMember) {
+        return this.settings.memberSettings.get(member.id);
+    }
 
     setMaster(member: GuildMember) {
         this.boundTo = member;
         this.permit(member.id);
         this.resetNeglectTimeout();
         this.save();
-    }
-
-    addMemberSetting(member: GuildMember, name: string, value: string) {
-        if (!this.memberSettings[member.id]) {
-            this.memberSettings[member.id] = {};
-        }
-
-        this.memberSettings[member.id][name] = value;
-        this.save();
-        return value;
-    }
-
-    clearMemberSettings(member: GuildMember) {
-        this.memberSettings[member.id] = {};
-        this.save();
-    }
-
-    getMemberSetting(member: GuildMember, name: string) {
-        return this.memberSettings[member.id]?.[name] ?? null;
-    }
-
-    deleteMemberSetting(member: GuildMember, name: string) {
-        delete this.memberSettings[member.id]?.[name];
-    }
-
-    getMemberSettings(member: GuildMember) {
-        return this.memberSettings[member.id] ?? {};
     }
 
     lang(key: string, params: Record<string, string>) {
@@ -129,12 +108,12 @@ export class Server {
 
     // does this server think it's in a voice channel
     inChannel() {
-        return !!this.guild.me?.voice;
+        return !!this.discordGuild.me?.voice;
     }
 
     async release() {
         if (this.leaving) return; // dont call it twice dude
-        await this.guild.me?.voice?.disconnect();
+        await this.discordGuild.me?.voice?.disconnect();
         commands.notify('leaveVoice', { server: this });
     }
 
@@ -147,7 +126,7 @@ export class Server {
                 'joinVoiceChannel(' +
                     voiceChannel.id +
                     '): already joined to ' +
-                    this.guild.me?.voice?.channelId +
+                    this.discordGuild.me?.voice?.channelId +
                     '!',
             );
         this.connecting = true;
@@ -157,8 +136,8 @@ export class Server {
             // join the voice channel and setup all the listeners to deal with events
             connection = joinVoiceChannel({
                 channelId: voiceChannel.id,
-                guildId: this.guild.id,
-                adapterCreator: this.guild.voiceAdapterCreator,
+                guildId: this.discordGuild.id,
+                adapterCreator: this.discordGuild.voiceAdapterCreator,
             });
         } catch (e: unknown) {
             this.stop('joinError');
@@ -202,22 +181,22 @@ export class Server {
 
     // switch from whatever the current voice channel is to this voice channel
     async switchVoiceChannel(voiceChannel: VoiceChannel) {
-        const conn = getVoiceConnection(this.guild.id);
+        const conn = getVoiceConnection(this.discordGuild.id);
         if (!conn) return this.joinVoiceChannel(voiceChannel);
-        if (voiceChannel.id === this.guild.me?.voice.channelId)
+        if (voiceChannel.id === this.discordGuild.me?.voice.channelId)
             return common.error('voiceChannel already joined');
 
         joinVoiceChannel({
             channelId: voiceChannel.id,
-            guildId: this.guild.id,
-            adapterCreator: this.guild.voiceAdapterCreator,
+            guildId: this.discordGuild.id,
+            adapterCreator: this.discordGuild.voiceAdapterCreator,
         });
     }
 
     // permit another user to speak
     permit(id: Snowflake) {
         this.resetNeglectTimeout(); // this is redundant, its run from the command as well
-        var member = this.guild.members.cache.find((member) => member.id == snowflake_id);
+        var member = this.discordGuild.members.cache.find((member) => member.id == snowflake_id);
         if (member) this.addMemberSetting(member, 'toLanguage', 'default');
         this.permitted.add(id);
         this.save();
@@ -300,13 +279,13 @@ export class Server {
             else return value;
         }
 
-        if (!filename) filename = paths.config + '/' + this.guild.id + '.server';
+        if (!filename) filename = paths.config + '/' + this.discordGuild.id + '.server';
         await fs.writeFile(filename, JSON.stringify(self, replacer), 'utf-8');
     }
 
     // load the state file
     async loadState() {
-        const filename = paths.config + '/' + this.guild.id + '.server';
+        const filename = paths.config + '/' + this.discordGuild.id + '.server';
 
         try {
             await fs.stat(filename);
@@ -350,7 +329,7 @@ export class Server {
         if (all) {
             this.audioQueue = [];
         }
-        const conn = getVoiceConnection(this.guild.id);
+        const conn = getVoiceConnection(this.discordGuild.id);
         conn?.disconnect();
     }
 

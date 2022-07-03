@@ -1,7 +1,6 @@
 import { Client, Permissions, Guild, GuildMember, TextBasedChannel, Intents } from 'discord.js';
 import { config } from '../../config/config.js';
 import * as common from './common.js';
-import translate from '@google-cloud/translate';
 
 class BotStuff {
     readonly bot: Client & { user: NonNullable<Client['user']> } = new Client({
@@ -14,10 +13,6 @@ class BotStuff {
     }) as Client & { user: NonNullable<Client['user']> };
 
     readonly config = config;
-
-    readonly translateClient = new translate.v2.Translate({
-        projectId: process.env.GCLOUD_PROJECT_ID,
-    });
 
     connect() {
         this.bot.login(process.env.TOKEN);

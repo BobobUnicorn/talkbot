@@ -2,7 +2,7 @@
   "name": "talkbot",
   "version": "0.0.1",
   "description": "Text to speech bot",
-  "main": "dist/index.js",
+  "main": "dist/src/index.js",
   "author": "YOUR-NAME-HERE",
   "type": "module",
   "scripts": {
@@ -27,6 +27,7 @@
     "module-alias": "^2.2.2",
     "node-fetch": "^3.2.6",
     "pad": "^3.2.0",
+    "pino": "^8.1.0",
     "prism-media": "^1.1.0",
     "request": "^2.88.2",
     "request-promise": "^4.2.6",
