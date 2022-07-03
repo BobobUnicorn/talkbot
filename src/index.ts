@@ -10,21 +10,19 @@
  * http://github.com/nullabork/talkbot
  */
 
-import { commands } from './src/commands/index.js';
+import { commands } from './commands/index.js';
 import figlet from 'figlet';
-import { botStuff } from './src/helpers/bot-stuff.js';
-import * as common from './src/helpers/common.js';
+import * as common from './helpers/common.js';
+import { Bot } from './managers/bot.js';
+import { logger } from './helpers/logger.js';
 
-//models
-const world = require('@models/World');
-
-const bot = botStuff.bot;
+const bot = new Bot();
 
 // runtime testing
 await testing.TestIfTTSAPIServicesAreConfigured();
 
 // FANCY SPLASH SCREEN
-figlet('TalkBot', (err, data) => console.log(data));
+figlet('TalkBot', (err, data) => logger.info(data));
 
 // when the server is ready to go
 bot.on('ready', () => {

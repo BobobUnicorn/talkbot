@@ -1,5 +1,5 @@
 import { botStuff } from '../helpers/bot-stuff.js';
-import { Server } from './server.js';
+import { GuildModel } from './guild.js';
 import * as common from '../helpers/common.js';
 import { config } from '../../config/config.js';
 import { Guild, Snowflake } from 'discord.js';
@@ -7,7 +7,7 @@ import { commands } from '../commands/index.js';
 const bot = botStuff.bot;
 
 export class World {
-    private readonly servers = new Map<Snowflake, Server>();
+    readonly #servers = new Map<Snowflake, GuildModel>();
     private presenceTimeout: ReturnType<typeof setTimeout> | null = null;
     readonly defaultTitle = 'master';
 

@@ -26,6 +26,14 @@ export async function getGuildStatistics(guildId: Snowflake, date: Date) {
     });
 }
 
+export async function getAllGuildStatistics(guildId: Snowflake) {
+    return await prisma.guildStatistics.findMany({
+        where: {
+            guildId,
+        },
+    });
+}
+
 export async function getMemberSettings(guildId: Snowflake, memberId: Snowflake) {
     return await prisma.memberSettings.findUnique({
         where: {

@@ -1,4 +1,4 @@
-import { Guild, GuildMember, Snowflake, VoiceChannel } from 'discord.js';
+import { Guild, GuildMember, PartialGuildMember, Snowflake, VoiceChannel } from 'discord.js';
 import {
     entersState,
     getVoiceConnection,
@@ -9,7 +9,6 @@ import {
 import { World } from './world.js';
 import Lang from 'lang.js';
 import * as common from '../helpers/common.js';
-import { botStuff } from '../helpers/bot-stuff.js';
 import * as fs from 'fs/promises';
 import * as paths from '../paths.js';
 import { TextToSpeechService, TTSOptions, VoiceProviders } from '../services/textToSpeechService.js';
@@ -17,6 +16,7 @@ import { commands } from '../commands/index.js';
 import { GuildSettings } from './guildSettings.js';
 import { getConfig } from 'src/managers/config.js';
 import { GuildStatistics } from './guildStatistics.js';
+import { VoiceChannelController } from 'src/controllers/voiceChannel.js';
 
 const config = await getConfig();
 
@@ -25,8 +25,10 @@ const TIMEOUT_NEGLECT = config.neglectTimeout;
 const NEGLECT_TIMEOUT_MESSAGES = config.neglectTimeoutMessages;
 
 export class GuildModel {
-    private readonly settings: GuildSettings;
-    private readonly stats: GuildStatistics;
+    readonly #settings: GuildSettings | null;
+    readonly #stats: GuildStatistics[];
+
+    readonly #voiceChannelController = new VoiceChannelController(this);
 
     boundTo: GuildMember | null = null;
     // when bound this will include the master, !permit to add others
@@ -61,10 +63,30 @@ export class GuildModel {
     }
 
     // create the server object
-    constructor(readonly discordGuild: Guild, private readonly world: World) {}
+    constructor(readonly discordGuild: Guild, settings: GuildSettings | null, stats: GuildStatistics[]) {
+        this.#settings = settings;
+        this.#stats = stats;
+    }
 
     getMemberSettings(member: GuildMember) {
-        return this.settings.memberSettings.get(member.id);
+        return this.#settings?.memberSettings.get(member.id);
+    }
+
+    async unregister() {
+        await this.#voiceChannelController.disconnect();
+    }
+
+    releaseIfBoundTo(member: GuildMember | PartialGuildMember) {
+        if (this.#isBoundTo(member)) {
+            this.#release();
+        }
+    }
+
+    followIfBoundTo(member: GuildMember | PartialGuildMember) {
+        if (this.#isBoundTo(member)) {
+            member.voice.channel instanceof VoiceChannel &&
+                this.#voiceChannelController.join(member.voice.channel);
+        }
     }
 
     setMaster(member: GuildMember) {
@@ -97,7 +119,7 @@ export class GuildModel {
         return this.messages && this.messages[possible_key];
     }
 
-    isMaster(member: GuildMember) {
+    #isBoundTo(member: GuildMember | PartialGuildMember) {
         return this.boundTo?.id == member.id;
     }
 
@@ -111,9 +133,8 @@ export class GuildModel {
         return !!this.discordGuild.me?.voice;
     }
 
-    async release() {
-        if (this.leaving) return; // dont call it twice dude
-        await this.discordGuild.me?.voice?.disconnect();
+    async #release() {
+        await this.#voiceChannelController.disconnect();
         commands.notify('leaveVoice', { server: this });
     }
 
@@ -172,7 +193,6 @@ export class GuildModel {
         });
 
         this.connecting = false;
-        this.save();
         this.world.setPresence();
         commands.notify('joinVoice', { server: this });
 
@@ -217,36 +237,6 @@ export class GuildModel {
         );
     }
 
-    // reset the timer that unfollows a user if they dont use the bot
-    resetNeglectTimeout() {
-        if (this.neglectTimeout) {
-            clearTimeout(this.neglectTimeout);
-        }
-        if (TIMEOUT_NEGLECT > 0) {
-            this.neglectTimeout = setTimeout(() => {
-                this.neglected();
-            }, TIMEOUT_NEGLECT);
-        }
-    }
-
-    // called when the neglect timeout expires
-    async neglected() {
-        // delay for 3 seconds to allow the bot to talk
-
-        if (this.inChannel()) {
-            await this.talk(
-                NEGLECT_TIMEOUT_MESSAGES[Math.floor(Math.random() * NEGLECT_TIMEOUT_MESSAGES.length)],
-            );
-            setTimeout(() => {
-                common.out('neglected: in chan');
-                this.release();
-            }, 3000);
-        } else {
-            common.out('neglected: server.release() not in chan');
-            this.release();
-        }
-    }
-
     // run this to cleanup resources before shutting down
     async shutdown() {
         common.out('shutdown(): ' + new Error().stack);
@@ -261,37 +251,6 @@ export class GuildModel {
         this.shutdown();
         if (this.neglectTimeout) {
             clearTimeout(this.neglectTimeout);
-        }
-    }
-
-    // save the state file
-    async save(filename?: string) {
-        this.updated = new Date();
-        function replacer(key: string, value: string) {
-            if (key.endsWith('_timeout')) return undefined; // these keys are internal timers that we dont want to save
-            if (key == 'commandResponses') return undefined;
-            if (key == 'bound_to') return undefined;
-            if (key == 'world') return undefined;
-            if (key == 'guild') return undefined;
-            if (key == 'keepQueue') return undefined;
-            if (key == 'switchQueue') return undefined;
-            if (key == 'twitch') return undefined;
-            else return value;
-        }
-
-        if (!filename) filename = paths.config + '/' + this.discordGuild.id + '.server';
-        await fs.writeFile(filename, JSON.stringify(self, replacer), 'utf-8');
-    }
-
-    // load the state file
-    async loadState() {
-        const filename = paths.config + '/' + this.discordGuild.id + '.server';
-
-        try {
-            await fs.stat(filename);
-            return JSON.parse(await fs.readFile(filename, 'utf8'));
-        } catch (e: unknown) {
-            return null;
         }
     }
 

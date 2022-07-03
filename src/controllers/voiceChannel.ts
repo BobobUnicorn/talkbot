@@ -88,7 +88,7 @@ export class VoiceChannelController {
     #audioQueue = new Queue();
     #player = createAudioPlayer({
         behaviors: {
-            noSubscriber: NoSubscriberBehavior.Play,
+            noSubscriber: NoSubscriberBehavior.Stop,
         },
     });
 
