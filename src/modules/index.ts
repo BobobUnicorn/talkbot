@@ -1,12 +1,3 @@
-/*jshint esversion: 9 */
-const path = require('path'),
-    auth = require('@auth');
-
-// models
-const MessageDetails = require('@models/MessageDetails'),
-    Command = require('@models/Command'),
-    Common = require('@helpers/common');
-
 function Commands() {
     const self = this;
     this.commands = {};

@@ -1,4 +1,12 @@
-import { Guild, GuildMember, PartialGuildMember, Snowflake, VoiceChannel } from 'discord.js';
+import {
+    Guild,
+    GuildMember,
+    PartialGuildMember,
+    Permissions,
+    Snowflake,
+    TextBasedChannel,
+    VoiceChannel,
+} from 'discord.js';
 import {
     entersState,
     getVoiceConnection,
@@ -17,6 +25,7 @@ import { GuildSettings } from './guildSettings.js';
 import { getConfig } from 'src/managers/config.js';
 import { GuildStatistics } from './guildStatistics.js';
 import { VoiceChannelController } from 'src/controllers/voiceChannel.js';
+import { logger } from 'src/helpers/logger.js';
 
 const config = await getConfig();
 
@@ -25,7 +34,7 @@ const TIMEOUT_NEGLECT = config.neglectTimeout;
 const NEGLECT_TIMEOUT_MESSAGES = config.neglectTimeoutMessages;
 
 export class GuildModel {
-    readonly #settings: GuildSettings | null;
+    readonly #settings: GuildSettings;
     readonly #stats: GuildStatistics[];
 
     readonly #voiceChannelController = new VoiceChannelController(this);
@@ -62,14 +71,18 @@ export class GuildModel {
         return this.discordGuild.id;
     }
 
+    get audioEmoji() {
+        return this.#settings.audioEmoji;
+    }
+
     // create the server object
-    constructor(readonly discordGuild: Guild, settings: GuildSettings | null, stats: GuildStatistics[]) {
+    constructor(readonly discordGuild: Guild, settings: GuildSettings, stats: GuildStatistics[]) {
         this.#settings = settings;
         this.#stats = stats;
     }
 
     getMemberSettings(member: GuildMember) {
-        return this.#settings?.memberSettings.get(member.id);
+        return this.#settings.memberSettings.get(member.id);
     }
 
     async unregister() {
@@ -87,6 +100,21 @@ export class GuildModel {
             member.voice.channel instanceof VoiceChannel &&
                 this.#voiceChannelController.join(member.voice.channel);
         }
+    }
+
+    willAllowGuildChanges(member: GuildMember | PartialGuildMember) {
+        return member.permissions.has(Permissions.FLAGS.MANAGE_GUILD, true);
+    }
+
+    async send(channel: TextBasedChannel, message: string) {
+        if (message.length > 2000) {
+            logger.error('message too long for discord', { channel: channel.id });
+            message = message.substring(0, 2000);
+        }
+        await channel.sendTyping();
+        await channel.send({
+            content: message,
+        });
     }
 
     setMaster(member: GuildMember) {

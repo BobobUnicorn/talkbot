@@ -33,12 +33,13 @@ model MemberSettings {
 }
 
 model AudioEmoji {
-  id            Int           @id @default(autoincrement())
   guildId       String
   guildSettings GuildSettings @relation(fields: [guildId], references: [guildId])
 
   emoji           String
   textReplacement String
+
+  @@id([guildId, emoji])
 }
 
 model GuildStatistics {

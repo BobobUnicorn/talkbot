@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { AudioEmoji, PrismaClient } from '@prisma/client';
 import { Snowflake } from 'discord.js';
 
 const prisma = new PrismaClient();
@@ -6,6 +6,18 @@ const prisma = new PrismaClient();
 export async function getGuildSettings(guildId: Snowflake) {
     return await prisma.guildSettings.findUnique({
         where: {
+            guildId,
+        },
+        include: {
+            audioEmoji: true,
+            memberSettings: true,
+        },
+    });
+}
+
+export async function createGuildSettings(guildId: Snowflake) {
+    return await prisma.guildSettings.create({
+        data: {
             guildId,
         },
         include: {
@@ -40,6 +52,42 @@ export async function getMemberSettings(guildId: Snowflake, memberId: Snowflake)
             memberId_guildId: {
                 memberId,
                 guildId,
+            },
+        },
+    });
+}
+
+export async function addAudioEmoji(
+    guildId: Snowflake,
+    emoji: string,
+    replacement: string,
+): Promise<AudioEmoji> {
+    return await prisma.audioEmoji.upsert({
+        create: {
+            emoji,
+            textReplacement: replacement,
+            guildId,
+        },
+        update: {
+            emoji,
+            textReplacement: replacement,
+            guildId,
+        },
+        where: {
+            guildId_emoji: {
+                guildId,
+                emoji,
+            },
+        },
+    });
+}
+
+export async function removeAudioEmoji(guildId: Snowflake, emoji: string): Promise<AudioEmoji> {
+    return await prisma.audioEmoji.delete({
+        where: {
+            guildId_emoji: {
+                guildId,
+                emoji,
             },
         },
     });
